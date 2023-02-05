@@ -2,8 +2,8 @@ import processorserver
 import edgeclient
 import mp3totext
 import speech_recognition as sr
-
-
+import AIinterface
+import tts
 
 def record_to_text():
     # Make the objects
@@ -27,7 +27,7 @@ def record_to_text():
     print("Finished the conversion process")
 
     # Convert the wav file to text (speechtotext)
-    textfromspeech = speakobj.file_to_text("output.wav",5)
+    textfromspeech = speakobj.file_to_text("output.wav",10)
     print(textfromspeech)
     return textfromspeech
 
@@ -39,14 +39,25 @@ def listen_for_keyword():
             audio = r.listen(source, timeout=2) # Set timeout to 2 seconds
         except sr.WaitTimeoutError:
             # Timeout error, ignore it and continue to the next iteration
-            print("Timeout threshold reached")
+            #print("Timeout threshold reached")
             return
     try:
         text = r.recognize_google(audio)
         print(text)
         if "wake up droid" in text:
             print("Keyword detected! Triggering event...")
-            record_to_text()
+            text_to_incorporate = record_to_text()
+            AIobj = AIinterface.AI()
+            print("ME:",str(text_to_incorporate))
+            modelfile = open("L3.model","r")
+            modeltext = modelfile.read()
+            modelfile.close()
+            data = modeltext.format(text_to_incorporate)
+            print(data)
+            response = AIobj.chat(data)
+            print("OpenAI: ", response)
+            ttsobject = tts.speech()
+            ttsobject.speak(response)
         else:
             print("Keyword not detected.")
 
